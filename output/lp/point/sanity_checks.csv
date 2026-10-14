@@ -1,0 +1,7 @@
+lp_specification,max_abs_beta_additivity_error
+spot_mps,2.72405795836983e-18
+forward_mps,1.6534083130403943e-18
+spot_gpr,9.622294280808852e-19
+forward_gpr,3.9302328752599536e-19
+spot_kerssenfischer,2.392021043046144e-18
+forward_kerssenfischer,1.8973538018496328e-18
