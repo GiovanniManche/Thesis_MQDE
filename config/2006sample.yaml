@@ -1,0 +1,128 @@
+project:
+  random_seed: 12345
+
+
+sample:
+  monthly_end: "2026-08-31"
+  daily_end: "2026-09-15"
+
+
+data:
+  monthly_input: "raw_inputs/EA_ILS_monthly_adjusted_input.xlsx"
+  daily_input: "raw_inputs/EA_ILS_daily_adjusted_input.xlsx"
+
+  date_column: "date"
+
+  maturity_columns:
+    1: "1Y"
+    2: "2Y"
+    3: "3Y"
+    4: "4Y"
+    5: "5Y"
+    6: "6Y"
+    7: "7Y"
+    8: "8Y"
+    9: "9Y"
+    10: "10Y"
+
+  scale: 0.01
+  sheet_name: null
+
+
+atsm:
+  dt: 0.08333333333333333   # 1/12
+  n_factors: 3
+
+  pca:
+    # PCA is estimated on centered data to obtain W.
+    # Observable pricing portfolios are then P = yields @ W.T.
+    center_for_weights: true
+
+    # Optional deterministic sign convention.
+    # null = keep sklearn/SVD signs.
+    # Example: [1, -1, 1].
+    factor_signs: null
+
+  estimation:
+    n_random_seeds: 50
+    n_repeats: 3
+    optimizer: "SLSQP"
+    ftol: 1.0e-8
+    maxiter: 2000
+    default_bad_likelihood: 1000.0
+
+    # Constraint on the final ordered canonical Q eigenvalue.
+    q_min_total_eigenvalue: -0.95
+
+    # Bounds on dlamQ.
+    q_first_difference_lower: -2.0
+    q_first_difference_upper: 0.5
+    q_other_difference_upper: 0.0
+
+    # Bounds on Sigma_P Cholesky diagonal and K0P_P.
+    cholesky_diag_lower: 1.0e-7
+    k0p_lower: -1.0
+    k0p_upper: 1.0
+
+  constraints:
+    # rho1_P(3) <= 5.
+    # factor follows the one-based MATLAB convention.
+    rho1_cap:
+      enabled: true
+      factor: 3
+      max_value: 5.0
+
+    # Long-run mean of inflation under P.
+    long_run_mean:
+      enabled: true
+      target: 0.02
+
+  decomposition:
+    compute_spots: true
+    compute_forwards: true
+    compute_5y5y: true
+
+  expanding:
+    first_vintage: "2018-01-31"
+    estimate_bias_adjusted: true
+    # We don't apply Killian otherwise stuck in 2022
+    apply_killian: False
+
+
+output:
+  # 1. Monthly
+  # Complete serialized ATSM models
+  model_file: "output/atsm/model/2006sample/atsm_standard_2006sample.json"
+  model_file_bias: "output/atsm/model/2006sample/atsm_bias_adjusted_2006sample.json"
+
+  # Standard ATSM decomposition
+  monthly_spot_file: "output/atsm/decomposition/monthly/2006sample/monthly_spot_standard_2006sample.csv"
+  monthly_forward_file: "output/atsm/decomposition/monthly/2006sample/monthly_forward_standard_2006sample.csv"
+
+  # Bias-adjusted ATSM decomposition
+  monthly_spot_file_bias: "output/atsm/decomposition/monthly/2006sample/monthly_spot_bias_adjusted_2006sample.csv"
+  monthly_forward_file_bias: "output/atsm/decomposition/monthly/2006sample/monthly_forward_bias_adjusted_2006sample.csv"
+
+  # 50/50 averaged decomposition
+  monthly_spot_file_average: "output/atsm/decomposition/monthly/2006sample/monthly_spot_average_2006sample.csv"
+  monthly_forward_file_average: "output/atsm/decomposition/monthly/2006sample/monthly_forward_average_2006sample.csv"
+
+  # 2. Daily
+  # Daily observable pricing portfolios
+  daily_states_file: "output/atsm/decomposition/daily/2006sample/daily_states_2006sample.csv"
+
+  # Daily standard ATSM decomposition
+  daily_spot_file: "output/atsm/decomposition/daily/2006sample/daily_spot_standard_2006sample.csv"
+  daily_forward_file: "output/atsm/decomposition/daily/2006sample/daily_forward_standard_2006sample.csv"
+
+  # Daily bias-adjusted ATSM decomposition
+  daily_spot_file_bias: "output/atsm/decomposition/daily/2006sample/daily_spot_bias_adjusted_2006sample.csv"
+  daily_forward_file_bias: "output/atsm/decomposition/daily/2006sample/daily_forward_bias_adjusted_2006sample.csv"
+
+  # Daily 50/50 averaged decomposition
+  daily_spot_file_average: "output/atsm/decomposition/daily/2006sample/daily_spot_average_2006sample.csv"
+  daily_forward_file_average: "output/atsm/decomposition/daily/2006sample/daily_forward_average_2006sample.csv"
+
+  # 3. Expanding
+  expanding_standard_file: "output/atsm/expanding/2006sample/expanding_standard_2006sample.csv"
+  expanding_bias_file: "output/atsm/expanding/2006sample/expanding_bias_adjusted_2006sample.csv"

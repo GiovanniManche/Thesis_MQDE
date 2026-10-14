@@ -1,0 +1,113 @@
+atsm_config: "config/backasted.yaml"
+
+lp:
+  max_horizon: 25
+  ic_lags: 5
+  shock_lags: 0
+  confidence_level: 0.90
+  nw_lags: "horizon"
+
+  # Decomposition used in the LPs: standard, bias_adjusted, or average.
+  decomposition_model: "average"
+
+bootstrap:
+  enabled: true
+  outer_replications: 100
+  inner_draws: 100
+
+  # The pseudo monthly ILS panel is generated from one estimated ATSM.
+  # The standard model is the baseline DGP; both models are re-estimated
+  # inside each draw when decomposition_model = average.
+  generator_model: "standard"
+
+  # Baseline keeps the original PCA pricing-portfolio basis fixed.
+  reestimate_pca: false
+  require_optimizer_success: true
+  max_attempts: 200
+  random_seed: 12345
+
+  # Optional optimizer overrides for the bootstrap. null keeps the ATSM
+  # estimation settings from the main ATSM configuration.
+  atsm_n_random_seeds: null
+  atsm_n_repeats: null
+  atsm_maxiter: null
+
+  # Loria-style percentile intervals are translated so that their midpoint
+  # is centered on the point estimate from the original sample.
+  recenter_intervals: true
+
+shocks:
+  mps:
+    input: "output/shocks/mps_altavilla.xlsx"
+    sheet: "factors"
+    columns: ["Target_std", "Timing_std", "FG_std", "QE_std"]
+
+  gpr:
+    input: "output/shocks/gpr_shocks_narrative.xlsx"
+    sheet: "shocks_narrative"
+    shock_column: "gpr_shock_std"
+    energy_column: "is_energy"
+    keep_column: "keep"
+    energy_name: "GPR_energy_std"
+    nonenergy_name: "GPR_nonenergy_std"
+  
+  kerssenfischer:
+    input: "raw_inputs/shocks_web.xlsx"
+    sheet: "shocks"
+    date_column: "Time"
+    rename:
+      purepolicy: "PurePolicy_std"
+      info: "Information_std"
+
+output:
+  directory: "output/lp"
+
+synthesis:
+  output_directory: "output/lp/synthesis"
+  workbook_name: "lp_synthetic_measures.xlsx"
+
+  # LP coefficients are stored in decimal-rate units, 10,000 converts them to bp.
+  rate_scale: 10000
+  confidence_level: 0.90
+
+  # Synthetic measures are computed from forwards only to avoid double counting
+  # the same term-structure information through both spot and forward rates.
+  forward_inputs: ["forward_mps", "forward_gpr", "forward_kerssenfischer"]
+  irf_inputs: ["spot_mps", "forward_mps", "spot_gpr", "forward_gpr",
+               "spot_kerssenfischer", "forward_kerssenfischer"]
+
+  # F = forwards whose starting date is at least 5 years ahead.
+  far_forward_points: ["1y5y", "1y6y", "1y7y", "1y8y", "1y9y", "5y5y"]
+  far_forward_start: 5.0
+  long_end_point: "5y5y"
+  persistence_horizon: 20
+
+  plot_irf_grids: true
+  plot_synthesis_figures: true
+  figure_format: "png"
+  figure_dpi: 300
+
+  shock_labels:
+    Target_std: "Target"
+    Timing_std: "Timing"
+    FG_std: "Forward Guidance"
+    QE_std: "QE"
+    GPR_energy_std: "GPR - energy"
+    GPR_nonenergy_std: "GPR - non-energy"
+    PurePolicy_std: "Pure monetary policy"
+    Information_std: "Central bank information"
+
+  # Optional individual IRFs. Add/remove entries as needed.
+  selected_irfs:
+    - source: "forward_mps"
+      shock: "Target_std"
+      curve_point: "1y1y"
+      component: "EC"
+    - source: "forward_mps"
+      shock: "Target_std"
+      curve_point: "5y5y"
+      component: "EC"
+    - source: "forward_mps"
+      shock: "Target_std"
+      curve_point: "1y4y"
+      component: "EC"

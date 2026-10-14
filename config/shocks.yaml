@@ -1,0 +1,39 @@
+mps:
+  input: "raw_inputs/EA-MPD.xlsx"
+  release_sheet: "Press Release Window"
+  conference_sheet: "Press Conference Window"
+  output_altavilla: "output/shocks/mps_altavilla.xlsx"
+  output_gss: "output/shocks/mps_gss.xlsx"
+
+gpr:
+  # Inputs/Outputs/Excel things
+  input: "raw_inputs/EA_GPR.xlsx"
+  brent_input: "raw_inputs/Brent.xlsx"
+  sheet: "DailyEAGPR"
+  date_column: "date"
+  gpr_column: "Daily EA GPR"
+  brent_sheet: "Sheet1"
+  brent_date_column: "date"
+  brent_price_column: "CO1 Generic 1st Brent Future"
+  output: "output/shocks/gpr_shocks.xlsx"
+
+  # ARMA estimation    
+  difference_order: 0   # 1 = diff(GPR), 0 = GPR in levels
+  max_ar_order: 5
+  max_ma_order: 2
+  selection_criterion: "bic"   # or "aic"
+  calendar_effects: true  # to add daily dummies to take into account calendar effects
+  trend: "c"    # c if constant, t if linear trend, ct if both, n if none
+  autocorrelation_lags: [1, 5, 10, 20, 30] # for LB test of autocorrelation
+
+  # Shock identification
+  threshold: 0.95       # quantile for identifying large positive shocks
+  threshold_sample: "positive" # sample used to compute the threshold (all or positive to restrict to eps>0)
+  # Following parameters shouldn't be changed unless to modify the rolling window size
+  pre_sample_years: 3
+  rolling_vol_window: 756   # should do pre_sample_years * 252 (trading days per year)
+  rolling_vol_min_periods: 504    # minimum number of observations required for rolling volatility calculation.
+  # So ideally we take 756 for instance, but if there are fewer observations available, we rely on the minimum periods.
+  # But cannot go below the minimum size. 
+
+
